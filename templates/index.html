@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Upload Energy Data</h4>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST" enctype="multipart/form-data" class="dropzone" id="fileUploadForm">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload CSV File</label>
+                        <input class="form-control" type="file" id="file" name="file" required>
+                        <div class="form-text">File should contain at least one datetime column and one energy demand column.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload & Analyze
+                    </button>
+                </form>
+                
+                <hr>
+                
+                <h5>Example Datasets</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">PJM Hourly Energy Consumption</h6>
+                                <a href="{{ url_for('static', filename='example_datasets/pjm_hourly.csv') }}" download class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Daily Energy Demand</h6>
+                                <a href="{{ url_for('static', filename='example_datasets/daily_demand.csv') }}" download class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

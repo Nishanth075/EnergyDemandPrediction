@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Analysis Results</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    File successfully processed! Detected <strong>{{ demand_col }}</strong> as demand column and <strong>{{ frequency }}</strong> frequency.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Model Performance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>RMSE</th>
+                                                <th>MAE</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for model, metrics in model_metrics.items() %}
+                                            <tr>
+                                                <td>{{ model }}</td>
+                                                <td>{{ "%.2f"|format(metrics['RMSE']) }}</td>
+                                                <td>{{ "%.2f"|format(metrics['MAE']) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>Quick Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="previewChart" style="height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <form method="POST" action="{{ url_for('visualize') }}">
+                        <input type="hidden" name="filename" value="{{ filename }}">
+                        <input type="hidden" name="demand_col" value="{{ demand_col }}">
+                        <input type="hidden" name="frequency" value="{{ frequency }}">
+                        <div class="input-group mb-3" style="width: 300px;">
+                            <span class="input-group-text">Predict next</span>
+                            <input type="number" class="form-control" name="prediction_periods" value="30" min="1" max="365">
+                            <span class="input-group-text">periods</span>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-chart-line me-2"></i>Visualize Trends
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div>
+                        <a href="{{ url_for('download_processed', filename=filename) }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-file-csv me-2"></i>Download Processed Data
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-upload me-2"></i>Upload New File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Parse the plot data
+    const plotData = JSON.parse('{{ plot_data | safe }}');
+    
+    // Create the preview chart
+    const trace1 = {
+        x: plotData.dates,
+        y: plotData.demand,
+        type: 'line',
+        name: plotData.demand_col
+    };
+    
+    const layout = {
+        title: 'Demand Overview',
+        xaxis: {
+            title: 'Date'
+        },
+        yaxis: {
+            title: plotData.demand_col
+        },
+        margin: {t: 30, b: 40, l: 50, r: 30}
+    };
+    
+    Plotly.newPlot('previewChart', [trace1], layout);
+</script>
+{% endblock %}

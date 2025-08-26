@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Energy Demand Visualization</h4>
+                    <div>
+                        <a href="{{ url_for('download_processed', filename=filename) }}" class="btn btn-sm btn-light me-2">
+                            <i class="fas fa-file-csv me-1"></i>Download Data
+                        </a>
+                        <button id="exportChart" class="btn btn-sm btn-light">
+                            <i class="fas fa-download me-1"></i>Export Chart
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="chartContainer" style="height: 600px;"></div>
+                
+                <div class="mt-4">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" id="zoomIn">
+                            <i class="fas fa-search-plus"></i> Zoom In
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="zoomOut">
+                            <i class="fas fa-search-minus"></i> Zoom Out
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="resetZoom">
+                            <i class="fas fa-expand"></i> Reset Zoom
+                        </button>
+                    </div>
+                    
+                    <div class="btn-group ms-2" role="group">
+                        <button type="button" class="btn btn-outline-primary" id="togglePredictions">
+                            <i class="fas fa-eye"></i> Toggle Predictions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Parse the graph JSON
+    const graphJSON = JSON.parse('{{ graphJSON | safe }}');
+    
+    // Create the chart
+    const chart = Plotly.newPlot('chartContainer', graphJSON.data, graphJSON.layout);
+    
+    // Chart controls
+    document.getElementById('zoomIn').addEventListener('click', function() {
+        Plotly.relayout('chartContainer', {
+            'xaxis.range[0]': graphJSON.layout.xaxis.range[0],
+            'xaxis.range[1]': new Date(graphJSON.layout.xaxis.range[0]).getTime() + 
+                (new Date(graphJSON.layout.xaxis.range[1]).getTime() - 
+                new Date(graphJSON.layout.xaxis.range[0]).getTime()) / 2
+        });
+    });
+    
+    document.getElementById('zoomOut').addEventListener('click', function() {
+        const currentRange = Plotly.relayout('chartContainer', 'xaxis.range');
+        if (currentRange) {
+            const rangeDiff = (new Date(currentRange['xaxis.range[1]']).getTime() - 
+                             (new Date(currentRange['xaxis.range[0]']).getTime();
+            const newRange = [
+                new Date((new Date(currentRange['xaxis.range[0]']).getTime() - rangeDiff/2),
+                new Date((new Date(currentRange['xaxis.range[1]']).getTime() + rangeDiff/2)
+            ];
+            Plotly.relayout('chartContainer', {'xaxis.range': newRange});
+        }
+    });
+    
+    document.getElementById('resetZoom').addEventListener('click', function() {
+        Plotly.relayout('chartContainer', {
+            'xaxis.range': graphJSON.layout.xaxis.range,
+            'yaxis.range': graphJSON.layout.yaxis.range
+        });
+    });
+    
+    document.getElementById('togglePredictions').addEventListener('click', function() {
+        const predictionsVisible = graphJSON.data[2].visible !== false;
+        Plotly.restyle('chartContainer', {'visible': !predictionsVisible}, [2]);
+    });
+    
+    document.getElementById('exportChart').addEventListener('click', function() {
+        Plotly.downloadImage('chartContainer', {
+            format: 'png',
+            filename: 'energy_demand_prediction',
+            height: 800,
+            width: 1200
+        });
+    });
+</script>
+{% endblock %}
